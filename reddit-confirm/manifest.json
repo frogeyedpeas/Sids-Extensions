@@ -4,7 +4,11 @@
   "version": "1.0",
   "description": "Warns you before following Reddit links from within Reddit.",
   "content_scripts": [{
-    "matches": ["*://*.reddit.com/*"],
+    "matches": [
+      "*://reddit.com/*",
+      "*://www.reddit.com/*",
+      "*://old.reddit.com/*"
+    ],
     "js": ["confirm.js"],
     "run_at": "document_start"
   }]
