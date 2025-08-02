@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Reddit→Reddit Confirm",
+  "version": "1.0",
+  "description": "Warns you before following Reddit links from within Reddit.",
+  "content_scripts": [{
+    "matches": ["*://*.reddit.com/*"],
+    "js": ["confirm.js"],
+    "run_at": "document_start"
+  }]
+}
