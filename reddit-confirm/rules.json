@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/warning.html" }
+    },
+    "condition": {
+      "urlFilter": "|http*://*.reddit.com/r/",
+      "resourceTypes": ["main_frame"],
+      "initiatorDomains": ["reddit.com", "www.reddit.com", "old.reddit.com"]
+    }
+  }
+]

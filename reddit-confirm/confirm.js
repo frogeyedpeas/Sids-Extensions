@@ -1,38 +1,64 @@
 console.log("🛡️ Reddit Confirm loaded on", location.href);
+// ==UserScript==
+// @name         Reddit→Reddit Confirm (SPA-aware)
+// @namespace    https://example.com/
+// @match        *://reddit.com/*
+// @match        *://www.reddit.com/*
+// @match        *://old.reddit.com/*
+// @grant        none
+// @run-at       document-start
+// ==/UserScript==
 
 (function() {
-  document.addEventListener('click', function(e) {
-    // 1) Find the nearest <a>
-    let el = e.target;
-    while (el && el.tagName !== 'A') el = el.parentElement;
-    if (!el) return;
-    
-    // 2) Read the raw href (may be relative)
-    const raw = el.getAttribute('href');
-    if (!raw) return;
-    
-    // 3) Is it a “reddit link”?
-    //    a) Relative-to-root “/r/...”, or “r/...” (no leading slash)
-    const relativeReddit = /^\/?r\/[^\/].*/i.test(raw);
-    //    b) Absolute reddit.com URL
-    let absolute;
+  console.log("🛡️ Reddit Confirm loaded on", location.href);
+
+  const warnIfRedditLink = raw => {
+    if (!raw) return false;
+    // Relative “/r/...” or “r/...”
+    const isRel = /^\/?r\/[^\/].*/i.test(raw);
+    // Absolute “reddit.com/…”
+    let isAbs = false;
     try {
-      absolute = new URL(raw, location.href);
-    } catch (_) {
-      absolute = null;
-    }
-    const absoluteReddit = absolute && absolute.hostname.endsWith('reddit.com');
-    
-    if (relativeReddit || absoluteReddit) {
-      // 4) Warn & confirm
-      const ok = confirm(
+      const u = new URL(raw, location.href);
+      isAbs = u.hostname.endsWith("reddit.com");
+    } catch {}
+    return isRel || isAbs;
+  };
+
+  // 1) Click handler (for full <a> navigations)
+  document.addEventListener("click", e => {
+    let a = e.target;
+    while (a && a.tagName !== "A") a = a.parentElement;
+    if (!a) return;
+    const href = a.getAttribute("href");
+    if (warnIfRedditLink(href)) {
+      if (!confirm(
         "⚠️ You’re about to follow a Reddit link from Reddit.\n" +
         "That can lead to endless doom-scrolling! Continue?"
-      );
-      if (!ok) {
+      )) {
         e.preventDefault();
         e.stopImmediatePropagation();
       }
     }
   }, { capture: true });
+
+  // 2) SPA navigation via pushState / replaceState
+  ["pushState","replaceState"].forEach(fn => {
+    const orig = history[fn];
+    history[fn] = function(state, title, url) {
+      if (warnIfRedditLink(url)) {
+        if (!confirm(
+          "⚠️ You’re about to navigate within Reddit (client-side)… Continue?"
+        )) {
+          return;  // bail out, so no navigation
+        }
+      }
+      return orig.apply(this, arguments);
+    };
+  });
+
+  // 3) Handle browser “back/forward” via popstate
+  window.addEventListener("popstate", e => {
+    // You could warn here if you really want; usually back/forward is fine.
+  });
 })();
